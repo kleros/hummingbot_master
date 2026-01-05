@@ -1,0 +1,14 @@
+# Environment
+.env
+
+# Log files
+*.log
+*.log.*
+
+# State files
+*.state
+ 
+# Python virtualenv
+.venv/
+venv/
+.DS_Store
