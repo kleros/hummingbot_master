@@ -83,6 +83,7 @@ def main() -> int:
             "alerts_detected",
             start_offset=start_offset,
             new_offset=new_offset,
+            matched_line=last_line_read.rstrip("\r\n"),
         )
 
         rc1, out1, err1 = kill_screen_session(session_name, timeout_s)
