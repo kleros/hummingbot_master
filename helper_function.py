@@ -74,7 +74,10 @@ def scan_new_lines(
     last_line_read = ""
     with open(log_file, "r", encoding="utf-8", errors="replace") as f:
         f.seek(start_offset, os.SEEK_SET)
-        for line in f:
+        while True:
+            line = f.readline()
+            if line == "":
+                break
             last_line_read = line
             if not matched:
                 up = line.upper()
@@ -82,6 +85,8 @@ def scan_new_lines(
                     if lvl in up:
                         matched = True
                         break
+            if matched:
+                break
         new_offset = f.tell()
     return new_offset, matched, last_line_read
 
