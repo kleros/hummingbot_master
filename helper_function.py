@@ -28,11 +28,26 @@ def atomic_write_state(state_path: str, data: Dict[str, Any]) -> None:
 def determine_start_offset_by_last_line(log_file: str, last_line: Optional[str]) -> int:
     """
     Determine the resume offset by locating the last processed log line.
-    - If last_line is None or not found (e.g., file rotated), start from 0.
+    - If last_line is None, treat as first run and start from the beginning of the last line.
+    - If not found (e.g., file rotated), start from 0.
     - If found, resume after that line.
     """
     if not last_line:
-        return 0
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+                # Position to the start of the last line so we read at least one line
+                last_line_start = 0
+                while True:
+                    line_start = f.tell()
+                    line = f.readline()
+                    if not line:
+                        break
+                    last_line_start = line_start
+                return last_line_start
+        except FileNotFoundError:
+            return 0
+        except Exception:
+            return 0
     try:
         with open(log_file, "r", encoding="utf-8", errors="replace") as f:
             # Iterate line by line; when we encounter last_line, return the offset just after it.
