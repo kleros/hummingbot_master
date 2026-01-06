@@ -50,9 +50,13 @@ def determine_start_offset_by_last_line(log_file: str, last_line: Optional[str])
             return 0
     try:
         with open(log_file, "r", encoding="utf-8", errors="replace") as f:
-            # Iterate line by line; when we encounter last_line, return the offset just after it.
-            for line in f:
-                if line == last_line:
+            # Iterate line by line using readline pattern; resume after the matched line.
+            needle = last_line.rstrip("\r\n")
+            while True:
+                line = f.readline()
+                if line == "":
+                    break
+                if line.rstrip("\r\n") == needle:
                     return f.tell()
         # Not found -> likely rotated/new file
         return 0

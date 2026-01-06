@@ -12,3 +12,6 @@
 .venv/
 venv/
 .DS_Store
+.vscode/*
+__pycache__/*
+.gitignore
