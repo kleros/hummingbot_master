@@ -20,6 +20,7 @@ def get_env_config() -> Dict[str, Any]:
     cancel_cmd = os.environ.get("HB_CANCEL_CMD", "bitfinex-maker-kit cancel --symbol tPNKUSD")
     levels = os.environ.get("HB_MATCH_LEVELS", "ERROR,WARNING")
     timeout_s = int(os.environ.get("HB_CMD_TIMEOUT", "60"))
+    skip_patterns_env = os.environ.get("HB_SKIP_PATTERNS", "")
 
     levels_clean = [lvl.strip().upper() for lvl in levels.split(",") if lvl.strip()]
     if not levels_clean:
@@ -33,6 +34,7 @@ def get_env_config() -> Dict[str, Any]:
         "cancel_cmd": cancel_cmd,
         "levels": levels_clean,
         "timeout_s": timeout_s,
+        "skip_patterns": [p.strip() for p in skip_patterns_env.split(",") if p.strip()],
     }
 
  
@@ -47,6 +49,7 @@ def main() -> int:
     timeout_s = cfg["timeout_s"]
     session_name = cfg["screen_session"]
     cancel_cmd = cfg["cancel_cmd"]
+    skip_patterns = cfg["skip_patterns"]
     print(cfg)
     try:
         logger = setup_logger(event_log_file)
@@ -55,7 +58,9 @@ def main() -> int:
         last_line_prev = prev_state.get("last_line") if isinstance(prev_state, dict) else None
         start_offset = determine_start_offset_by_last_line(log_file, last_line_prev)
         try:
-            new_offset, matched, last_line_read = scan_new_lines(log_file, start_offset, levels)
+            new_offset, matched, last_line_read = scan_new_lines(
+                log_file, start_offset, levels, skip_patterns
+            )
         except Exception as e:
             log_event(logger, "ERROR", "read_failed", error=str(e), log_file=log_file)
             return 1

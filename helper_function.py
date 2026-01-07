@@ -67,11 +67,15 @@ def determine_start_offset_by_last_line(log_file: str, last_line: Optional[str])
 
 
 def scan_new_lines(
-    log_file: str, start_offset: int, levels: list[str]
+    log_file: str,
+    start_offset: int,
+    levels: list[str],
+    skip_substrings: Optional[list[str]] = None,
 ) -> Tuple[int, bool, str]:
     matched = False
     new_offset = start_offset
     last_line_read = ""
+    skip_lower = [s.lower() for s in (skip_substrings or [])]
     with open(log_file, "r", encoding="utf-8", errors="replace") as f:
         f.seek(start_offset, os.SEEK_SET)
         while True:
@@ -79,6 +83,9 @@ def scan_new_lines(
             if line == "":
                 break
             last_line_read = line
+            # Skip lines that contain any of the configured substrings
+            if skip_lower and any(s in line.lower() for s in skip_lower):
+                continue
             if not matched:
                 up = line.upper()
                 for lvl in levels:
