@@ -8,18 +8,27 @@ from typing import Any, Optional
 
 def setup_logger(log_path: Optional[str] = None) -> logging.Logger:
     """
-    Configure a logger that emits structured JSON messages (wide event logs).
+    Configure a logger that emits structured JSON messages.
+    Always logs to console, and optionally to a file if log_path is provided.
     """
     logger = logging.getLogger("hb_monitor")
     if not logger.handlers:
         logger.setLevel(logging.INFO)
+        formatter = logging.Formatter("%(message)s")
+
+        # 1. Always add Console Handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        # 2. Optionally add File Handler
         if log_path:
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            handler = logging.FileHandler(log_path, encoding="utf-8")
-        else:
-            handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(message)s"))
-        logger.addHandler(handler)
+            full_path = os.path.expanduser(log_path)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            file_handler = logging.FileHandler(full_path, encoding="utf-8")
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+
         logger.propagate = False
     return logger
 
