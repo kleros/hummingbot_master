@@ -1,16 +1,13 @@
 import os
 import sys
 from typing import Any, Dict
-from wide_logger import setup_logger, log_event
-from helper_function import (
-    load_state,
+from hleper_functions.wide_logger import setup_logger, log_event
+from hleper_functions.helper_function import (
     atomic_write_state,
-    determine_start_offset_by_last_line,
-    scan_new_lines,
     kill_screen_session,
     run_cancel_command,
 )
-from helper_functions_spread import (
+from hleper_functions.helper_functions_spread import (
     run_list_command,
     parse_orders_from_text,
     split_filter_sort_orders,
@@ -19,24 +16,16 @@ from helper_functions_spread import (
 
 
 def get_env_config() -> Dict[str, Any]:
-    log_file = os.environ.get("HB_LOG_FILE", "/var/log/hummingbot/latest.log")
-    state_file = os.environ.get("HB_STATE_FILE", "/tmp/hb_log_monitor.state")
-    event_log_file = os.environ.get("HB_EVENT_LOG_FILE", "/tmp/hb_log_monitor.log")
+    state_file = os.environ.get("SPREAD_STATE_FILE", "~/hummingbot_master/states/spread.state")
+    event_log_file = os.environ.get("SPREAD_EVENT_LOG_FILE", "~/hummingbot_master/logs/spread_log_monitor.log")
     screen_session = os.environ.get("HB_SCREEN_SESSION", "hummingbot")
     cancel_cmd = os.environ.get("HB_CANCEL_CMD", "bitfinex-maker-kit cancel --symbol tPNKUSD")
     list_cmd = os.environ.get("HB_LIST_CMD", "bitfinex-maker-kit list --symbol tPNKUSD")
     min_order_amount = float(os.environ.get("HB_MIN_ORDER_AMOUNT", "0"))
     spread_percent_threshold = float(os.environ.get("HB_SPREAD_PERCENT_THRESHOLD", "0.5"))
-    levels = os.environ.get("HB_MATCH_LEVELS", "ERROR,WARNING")
     timeout_s = int(os.environ.get("HB_CMD_TIMEOUT", "60"))
-    skip_patterns_env = os.environ.get("HB_SKIP_PATTERNS", "")
-
-    levels_clean = [lvl.strip().upper() for lvl in levels.split(",") if lvl.strip()]
-    if not levels_clean:
-        levels_clean = ["ERROR", "WARNING"]
 
     return {
-        "log_file": log_file,
         "state_file": state_file,
         "event_log_file": event_log_file,
         "screen_session": screen_session,
@@ -44,28 +33,20 @@ def get_env_config() -> Dict[str, Any]:
         "list_cmd": list_cmd,
         "min_order_amount": min_order_amount,
         "spread_percent_threshold": spread_percent_threshold,
-        "levels": levels_clean,
         "timeout_s": timeout_s,
-        "skip_patterns": [p.strip() for p in skip_patterns_env.split(",") if p.strip()],
     }
-
- 
 
 
 def main() -> int:
     cfg = get_env_config()
-    log_file = cfg["log_file"]
     state_file = cfg["state_file"]
     event_log_file = cfg["event_log_file"]
-    levels = cfg["levels"]
     timeout_s = cfg["timeout_s"]
     session_name = cfg["screen_session"]
     cancel_cmd = cfg["cancel_cmd"]
     list_cmd = cfg["list_cmd"]
     min_order_amount = cfg["min_order_amount"]
     spread_percent_threshold = cfg["spread_percent_threshold"]
-    skip_patterns = cfg["skip_patterns"]
-    print(cfg)
     try:
         logger = setup_logger(event_log_file)
         log_event(
@@ -73,7 +54,6 @@ def main() -> int:
             "INFO",
             "run_start",
             mode="spread_check",
-            log_file=log_file,
             state_file=state_file,
             list_cmd=list_cmd,
             min_order_amount=min_order_amount,
