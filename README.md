@@ -1,4 +1,16 @@
-## Hummingbot Spread Monitor — Overview
+# Hummingbot Management Tools
+
+This repository provides a set of scripts to manage and monitor Hummingbot states on Bitfinex.
+
+## Overview
+
+The following scripts are available in this repo for managing the state of Hummingbot:
+- **`spread.py`**: An automated monitor that calculates the bid-ask spread and triggers safety actions (killing the bot and cancelling orders) if the spread threshold is breached.
+- **`put_order.py`**: A manual script for placing single orders on Bitfinex, used to fill an order in the bot or change the best bid/ask.
+
+---
+
+## Hummingbot Spread Monitor — Detailed Overview
 
 This utility monitors the order book of a Hummingbot instance by running a "list" command. It calculates the current bid-ask spread and, if it exceeds a configured threshold (or if the book is crossed), takes automated safety actions:
 
@@ -33,6 +45,7 @@ It is designed to be idempotent and safe to run on a schedule (e.g., via cron).
 ## Files in this repo
 
 - `spread.py`: CLI entry point and high-level orchestration
+- `put_order.py`: Manual script to place a single order on Bitfinex
 - `hleper_functions/`: directory containing helper modules
   - `helper_function.py`: state and subprocess helpers
   - `helper_functions_spread.py`: spread calculation and order parsing helpers
@@ -68,6 +81,19 @@ source .env
 
 python3 spread.py
 echo "Exit code: $?"  # 0 = ok/no breach, 2 = action failed, 1 = unexpected error
+```
+
+
+## Manual Order Placement (`put_order.py`)
+
+In addition to the spread monitor, there is a standalone script `put_order.py` for placing manual orders on Bitfinex. This is useful for:
+- Manually filling an order for the bot.
+- Manually adjusting the best bid or best ask in the order book.
+
+**Note**: The configuration for this script (price, amount, side, and symbol) is currently **hardcoded** at the bottom of the file in the `if __name__ == "__main__":` block. You must edit the script directly to change these values before running it:
+
+```bash
+python3 put_order.py
 ```
 
 
