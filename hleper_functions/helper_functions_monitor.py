@@ -63,13 +63,35 @@ def fetch_inventory(api_key: str, api_secret: str, logger: Optional[logging.Logg
                     inventory["PNK"] = float(wallet.balance)
                 elif wallet.currency == "USD":
                     inventory["USD"] = float(wallet.balance)
-        print(inventory)
         return inventory
     except Exception as e:
         if logger:
             log_event(logger, "ERROR", "fetch_inventory_failed", error=str(e))
         # Returning zeros as fallback.
         return {"PNK": 0.0, "USD": 0.0}
+
+def fetch_ticker_price(symbol: str, logger: Optional[logging.Logger] = None) -> float:
+    """
+    Fetch the last price for a given symbol from Bitfinex public API.
+    """
+    bfx = Client()
+    try:
+        # Use get_t_ticker for trading pairs like tPNKUSD
+        ticker = bfx.rest.public.get_t_ticker(symbol)
+        
+        # bitfinex-api-py returns a TradingPairTicker dataclass
+        if hasattr(ticker, 'last_price'):
+            return float(ticker.last_price)
+        
+        # Fallback if it's a list/tuple (older versions or different symbols)
+        if isinstance(ticker, (list, tuple)) and len(ticker) > 6:
+            return float(ticker[6])
+            
+        return 0.0
+    except Exception as e:
+        if logger:
+            log_event(logger, "ERROR", "fetch_ticker_failed", symbol=symbol, error=str(e))
+        return 0.0
 
 def calculate_asset_metrics(pnk_amount: float, usd_amount: float, mid_price: float) -> Dict[str, Any]:
     """

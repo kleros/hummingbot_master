@@ -15,6 +15,7 @@ from hleper_functions.helper_functions_monitor import (
     read_assets_state,
     fetch_inventory,
     calculate_asset_metrics,
+    fetch_ticker_price,
 )
 
 def get_env_config() -> Dict[str, Any]:
@@ -92,12 +93,19 @@ def main() -> int:
         pnk_amount = inventory["PNK"]
         usd_amount = inventory["USD"]
         
-        # Calculate current metrics
-        metrics = calculate_asset_metrics(pnk_amount, usd_amount, mid_price)
+        # Fetch current PNK price from Bitfinex API
+        pnk_price = fetch_ticker_price("tPNKUSD", logger=logger)
+        # Use mid_price as fallback if ticker fetch fails
+        if pnk_price <= 0:
+            pnk_price = mid_price
+            
+        # Calculate current metrics using PNK price from API instead of local mid_price
+        metrics = calculate_asset_metrics(pnk_amount, usd_amount, pnk_price)
         
         # Update assets state file
         new_state = {
             "mid_price": mid_price,
+            "pnk_price": pnk_price,
             "pnk_amount": pnk_amount,
             "usd_amount": usd_amount,
             "total_value": metrics["total_value"]
@@ -112,6 +120,7 @@ def main() -> int:
             best_bid=best_bid,
             best_ask=best_ask,
             mid_price=mid_price,
+            pnk_price=pnk_price,
             spread_percent=spread_percent,
             bid_liquidity_usd_2pct=bid_liq_usd_2pct,
             ask_liquidity_usd_2pct=ask_liq_usd_2pct,

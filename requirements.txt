@@ -1,1 +1,2 @@
 bitfinex-api-py
+urllib3<2
