@@ -130,8 +130,8 @@ def main() -> int:
             pnk_amount=pnk_amount,
             usd_amount=usd_amount,
             total_value=metrics["total_value"],
-            pnk_proportion=f"{metrics['pnk_proportion']:.2f}%",
-            usd_proportion=f"{metrics['usd_proportion']:.2f}%",
+            pnk_proportion=f"{metrics['pnk_proportion']:.2f}",
+            usd_proportion=f"{metrics['usd_proportion']:.2f}",
             # Previous state for comparison (optional but helpful for dashboards)
             prev_total_value=prev_state.get("total_value")
         )
