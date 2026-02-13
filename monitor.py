@@ -74,6 +74,15 @@ def main() -> int:
         # 3. Get best bid and ask to calculate spread and mid price
         best_bid = buy_prices[0] if buy_prices else None
         best_ask = sell_prices[0] if sell_prices else None
+
+        # Retry once if best_bid or best_ask are empty
+        if best_bid is None or best_ask is None:
+            rc, stdout, stderr = run_list_command(list_cmd, timeout_s)
+            if rc == 0:
+                orders = parse_orders_from_text(stdout)
+                buy_prices, sell_prices = split_filter_sort_orders(orders, min_amount)
+                best_bid = buy_prices[0] if buy_prices else None
+                best_ask = sell_prices[0] if sell_prices else None
         
         # 4. Calculate spread percentage
         spread_percent = compute_spread_percent_mid(best_bid, best_ask)
