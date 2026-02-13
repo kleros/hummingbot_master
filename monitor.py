@@ -83,6 +83,18 @@ def main() -> int:
                 buy_prices, sell_prices = split_filter_sort_orders(orders, min_amount)
                 best_bid = buy_prices[0] if buy_prices else None
                 best_ask = sell_prices[0] if sell_prices else None
+            
+            # If still empty after retry, log warning and return
+            if best_bid is None or best_ask is None:
+                log_event(
+                    logger,
+                    "WARNING",
+                    "missing_best_prices_after_retry",
+                    best_bid=best_bid,
+                    best_ask=best_ask,
+                    cmd=list_cmd
+                )
+                return 0  # Returning 0 to avoid triggering error alerts, but stopping execution for this cycle
         
         # 4. Calculate spread percentage
         spread_percent = compute_spread_percent_mid(best_bid, best_ask)
