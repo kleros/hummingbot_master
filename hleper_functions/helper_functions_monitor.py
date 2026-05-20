@@ -1,9 +1,16 @@
 import json
 import os
 import logging
+import urllib.error
+import urllib.request
 from typing import List, Tuple, Optional, Dict, Any
 from bfxapi import Client
 from hleper_functions.wide_logger import log_event
+
+COINGECKO_KLEROS_BITFINEX_URL = (
+    "https://api.coingecko.com/api/v3/coins/kleros/tickers"
+    "?exchange_ids=bitfinex&depth=true"
+)
 
 def calculate_mid_price(best_bid: Optional[float], best_ask: Optional[float]) -> float:
     """
@@ -69,6 +76,48 @@ def fetch_inventory(api_key: str, api_secret: str, logger: Optional[logging.Logg
             log_event(logger, "ERROR", "fetch_inventory_failed", error=str(e))
         # Returning zeros as fallback.
         return {"PNK": 0.0, "USD": 0.0}
+
+def fetch_coingecko_bitfinex_metrics(
+    logger: Optional[logging.Logger] = None,
+    timeout_s: int = 30,
+) -> Dict[str, Any]:
+    """
+    Fetch Bitfinex PNK/USD spread and ±2% book depth from CoinGecko
+    (same metrics as https://www.coingecko.com/en/coins/kleros).
+    """
+    try:
+        req = urllib.request.Request(
+            COINGECKO_KLEROS_BITFINEX_URL,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "hummingbot-master-monitor/1.0",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        tickers = data.get("tickers") or []
+        pnk_usd = [
+            t
+            for t in tickers
+            if t.get("base", "").upper() == "PNK" and t.get("target", "").upper() == "USD"
+        ]
+        if not pnk_usd:
+            if logger:
+                log_event(logger, "WARNING", "coingecko_bitfinex_ticker_not_found")
+            return {}
+
+        ticker = pnk_usd[0]
+        return {
+            "spread_percent": ticker.get("bid_ask_spread_percentage"),
+            "bid_liquidity_usd_2pct": ticker.get("cost_to_move_down_usd"),
+            "ask_liquidity_usd_2pct": ticker.get("cost_to_move_up_usd"),
+            "last_fetch_at": ticker.get("last_fetch_at"),
+        }
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError, TimeoutError) as e:
+        if logger:
+            log_event(logger, "WARNING", "coingecko_fetch_failed", error=str(e))
+        return {}
 
 def fetch_ticker_price(symbol: str, logger: Optional[logging.Logger] = None) -> float:
     """

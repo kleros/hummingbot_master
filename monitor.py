@@ -16,6 +16,7 @@ from hleper_functions.helper_functions_monitor import (
     fetch_inventory,
     calculate_asset_metrics,
     fetch_ticker_price,
+    fetch_coingecko_bitfinex_metrics,
 )
 
 def get_env_config() -> Dict[str, Any]:
@@ -105,6 +106,9 @@ def main() -> int:
         # 6. Calculate total liquidity in USD within ±2% of mid price
         bid_liq_usd_2pct, ask_liq_usd_2pct = calculate_liquidity(orders, mid_price, 2.0)
 
+        # 6b. CoinGecko Bitfinex market metrics (spread, ±2% depth)
+        cg_metrics = fetch_coingecko_bitfinex_metrics(logger=logger, timeout_s=timeout_s)
+
         # 7. Asset and Inventory Tracking
         # Read previous state
         prev_state = read_assets_state(assets_state_file)
@@ -145,6 +149,10 @@ def main() -> int:
             spread_percent=spread_percent,
             bid_liquidity_usd_2pct=bid_liq_usd_2pct,
             ask_liquidity_usd_2pct=ask_liq_usd_2pct,
+            coingecko_spread_percent=cg_metrics.get("spread_percent"),
+            coingecko_bid_liquidity_usd_2pct=cg_metrics.get("bid_liquidity_usd_2pct"),
+            coingecko_ask_liquidity_usd_2pct=cg_metrics.get("ask_liquidity_usd_2pct"),
+            coingecko_last_fetch_at=cg_metrics.get("last_fetch_at"),
             buys_count=len(buy_prices),
             sells_count=len(sell_prices),
             # Asset metrics
